@@ -1,0 +1,33 @@
+.app-container {
+  display: flex;
+}
+
+.sidebar-wrapper {
+  width: 250px;
+  position: relative; 
+}
+
+.main-content {
+  flex-grow: 1;
+}
+
+@media (min-width: 992px) {
+  .sidebar-wrapper {
+    position: fixed;
+    top: 86px;
+    left: 0;
+    height: 100%;
+    z-index: 1030;
+  }
+  .main-content {
+    margin-left: 210px;
+    margin-top: 5px;
+  }
+}
+
+@media (max-width: 991.98px) {
+   .main-content {
+    margin-left: 210px;
+    margin-top: 20px;
+  }
+}
