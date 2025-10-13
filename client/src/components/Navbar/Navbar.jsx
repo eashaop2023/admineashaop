@@ -4,7 +4,7 @@ import { Navbar, Container, Dropdown } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import logo from "../../assets/eashalogo.png";
+import logo from "../../assets/eAshalogo.png";
 import profile from "../../assets/profile.png";
 import { API_BASE_URL } from "../../api-config";
 
