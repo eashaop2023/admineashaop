@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import axios from "axios";
-import logo from "../../assets/eashalogo.png";
+import logo from "../../assets/eAshalogo.png";
 import { API_BASE_URL } from "../../api-config";
 
 const Login = () => {
