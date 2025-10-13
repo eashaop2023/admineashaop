@@ -10,7 +10,7 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://admin.eashaop.com", "http://localhost:5174"],
+    origin: ["http://localhost:5173", "https://admin.eashaop.com", "https://www.admin.eashaop.com"],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
