@@ -229,7 +229,6 @@ const verifyDoctor = async (req, res) => {
     res.json({
       success: true,
       message: "Doctor verified and approved successfully.",
-      loginCredentials: { username, password: randomPassword },
     });
   } catch (error) {
     console.error(" Error verifying doctor:", error);
