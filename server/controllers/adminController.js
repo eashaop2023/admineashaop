@@ -6,7 +6,7 @@ const VerifiedDoctor = require("../models/VerifiedDoctor");
 const { addTokenToBlacklist } = require("../utils/tokenBlacklist");
 const bcrypt = require("bcryptjs");
 const { ObjectId } = require("mongodb");
-const sendEmail = require("../utils/sendEmail");
+const { sendEmailByMailSender } = require("../utils/sendEmail");
 const Appointment = require("../models/Appointment");
 
 // Register Admin
@@ -159,6 +159,7 @@ const deleteDoctor = async (req, res) => {
 
 
 
+
 // Verify the Doctor
 const verifyDoctor = async (req, res) => {
   const doctorId = req.params.id;
@@ -174,15 +175,15 @@ const verifyDoctor = async (req, res) => {
 
     const username = doctor.email || doctor.mobile;
     const randomPassword = Math.random().toString(36).slice(-8);
-    const hashedPasswordPromise = bcrypt.hash(randomPassword, 10);
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
-    // Update doctor document once
+    // Update doctor document
     doctor.isVerified = true;
     doctor.isApproved = true;
     doctor.username = username;
-    doctor.password = await hashedPasswordPromise;
+    doctor.password = hashedPassword;
 
-    // Save doctor and VerifiedDoctor concurrently
+    // Create or update VerifiedDoctor entry
     const verifiedDoctorPromise = VerifiedDoctor.findOne({ doctorId: doctor._id })
       .then((existing) => {
         if (!existing) {
@@ -192,18 +193,37 @@ const verifyDoctor = async (req, res) => {
             email: doctor.email,
             mobile: doctor.mobile,
             username,
-            password: doctor.password,
+            password: hashedPassword,
           }).save();
         }
       });
 
     await Promise.all([doctor.save(), verifiedDoctorPromise]);
 
-    // Send email asynchronously (don’t block response)
+
     if (doctor.email) {
-      const emailSubject = "Your Doctor Portal Login Credentials";
-      const emailText = `Hello Dr. ${doctor.name},\n\nUsername: ${username}\nPassword: ${randomPassword}\n\nPlease log in and change your password.\n`;
-      sendEmail(doctor.email, emailSubject, emailText).catch(console.error);
+      const subject = "Your Doctor Portal Login Credentials";
+
+      // ✨ HTML Email Template
+      const message = `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #eee;border-radius:8px;">
+          <h2 style="color:#2c3e50;">Welcome to the Doctor Portal, Dr. ${doctor.name}</h2>
+          <p>Your account has been <strong>verified and approved</strong>.</p>
+          <p>You can now log in using the following credentials:</p>
+          <div style="background:#f9f9f9;padding:15px;border-radius:6px;margin-top:10px;margin-bottom:20px;">
+            <p><strong>Username:</strong> ${username}</p>
+            <p><strong>Password:</strong> ${randomPassword}</p>
+          </div>
+          <p>Please log in and <strong>change your password</strong> after first login.</p>
+          <p>Thank you,<br/><strong>eAshaop 24/7 Team</strong></p>
+        </div>
+      `;
+
+      await sendEmailByMailSender({
+        email: doctor.email,
+        subject,
+        message,
+      });
     }
 
     res.json({
@@ -212,7 +232,7 @@ const verifyDoctor = async (req, res) => {
       loginCredentials: { username, password: randomPassword },
     });
   } catch (error) {
-    console.error("❌ Error verifying doctor:", error);
+    console.error(" Error verifying doctor:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
