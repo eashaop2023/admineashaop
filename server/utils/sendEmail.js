@@ -20,7 +20,7 @@ const sendEmailByMailSender = async ({ email, subject, message }) => {
     await mailerSend.email.send(emailParams);
     console.log(`Email sent successfully to ${email}`);
   } catch (error) {
-    console.error("Email send failed:", error?.response?.body || error.message);
+    console.error("Email send failed:", error);
     throw new Error("Email could not be sent", error);
   }
 };
