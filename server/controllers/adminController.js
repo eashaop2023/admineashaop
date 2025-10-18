@@ -207,7 +207,7 @@ const verifyDoctor = async (req, res) => {
       // ✨ HTML Email Template
       const message = `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #eee;border-radius:8px;">
-          <h2 style="color:#2c3e50;">Welcome to the Doctor Portal, Dr. ${doctor.name}</h2>
+          <h2 style="color:#2c3e50;">Welcome to the Doctor Portal, Dear. ${doctor.name}</h2>
           <p>Your account has been <strong>verified and approved</strong>.</p>
           <p>You can now log in using the following credentials:</p>
           <div style="background:#f9f9f9;padding:15px;border-radius:6px;margin-top:10px;margin-bottom:20px;">
