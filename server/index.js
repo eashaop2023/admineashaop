@@ -8,9 +8,21 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
+// app.use(
+//   cors({
+//     origin: ["http://localhost:5173", "https://admin.eashaop.com", "https://www.admin.eashaop.com"],
+//     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+//     credentials: true,
+//   })
+// );
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://admin.eashaop.com", "https://www.admin.eashaop.com"],
+    origin: [
+      "http://localhost:5173",
+      "https://admin.eashaop.com",
+      "https://www.admin.eashaop.com",
+      "https://e-ashaop-git-apiauthtoken-eashas-projects-ea375452.vercel.app"
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
