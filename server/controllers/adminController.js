@@ -11,7 +11,10 @@ const Appointment = require("../models/Appointment");
 
 // Register Admin
 const registerAdmin = async (req, res) => {
+  console.log("REGISTER BODY:", req.body);
+
   const { username, mobileNo, email, password } = req.body;
+
 
   try {
     const existingAdmin = await Admin.findOne({ email });
@@ -19,13 +22,31 @@ const registerAdmin = async (req, res) => {
       return res.status(400).json({ message: "Admin already exists" });
     }
 
-    const admin = await Admin.create({ username, mobileNo, email, password });
-    res.status(201).json({ message: "Admin registered successfully", admin });
+    const admin = await Admin.create({
+      username,
+      mobileNo,
+      email,
+      password,
+    });
+
+const token = generateToken(admin._id, "admin");
+
+res.status(201).json({
+  message: "Admin registered successfully",
+  token,
+  admin: {
+    id: admin._id,
+    username: admin.username,
+    email: admin.email,
+  },
+});
+
   } catch (error) {
     console.error("Register error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // Login Admin
 const loginAdmin = async (req, res) => {

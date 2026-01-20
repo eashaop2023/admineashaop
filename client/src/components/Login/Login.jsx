@@ -21,20 +21,22 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        `${API_BASE_URL}/api/admin/login`,
-        { 
-          email: identifier,
-          password: password,
-          withCredentials: true
-        }
-      );
+  `${API_BASE_URL}/api/admin/login`,
+  {
+    email: identifier,
+    password,
+  },
+  {
+    withCredentials: true,
+  }
+);
 
       // ✅ Save token and admin info in localStorage
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("admin", JSON.stringify(response.data.admin));
 
       // Navigate to admin dashboard or ManageDoctors page
-      navigate("/dashboard");
+     navigate("/admin");
     } catch (err) {
       // console.error(err);
       if (err.response && err.response.data) {
@@ -122,6 +124,17 @@ const Login = () => {
           >
             {loading ? "Logging in..." : "Login"}
           </button>
+
+          {/* <p className="text-center mt-3 mb-0">
+             Don’t have an account?{" "}
+  <span
+    style={{ color: "#0d6efd", cursor: "pointer" }}
+    onClick={() => navigate("/register")}
+  >
+    Register
+  </span>
+</p> */}
+
         </form>
       </div>
     </div>
@@ -129,3 +142,5 @@ const Login = () => {
 };
 
 export default Login;
+
+
