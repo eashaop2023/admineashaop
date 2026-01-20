@@ -9,16 +9,19 @@ const { ObjectId } = require("mongodb");
 const { sendEmailByMailSender } = require("../utils/sendEmail");
 const Appointment = require("../models/Appointment");
 
-// Register Admin
+// REGISTER
 const registerAdmin = async (req, res) => {
-  console.log("REGISTER BODY:", req.body);
-
-  const { username, mobileNo, email, password } = req.body;
-
-
   try {
-    const existingAdmin = await Admin.findOne({ email });
-    if (existingAdmin) {
+    console.log("REGISTER BODY:", req.body);
+
+    const { username, mobileNo, email, password } = req.body;
+
+    if (!username || !mobileNo || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const adminExists = await Admin.findOne({ email });
+    if (adminExists) {
       return res.status(400).json({ message: "Admin already exists" });
     }
 
@@ -29,30 +32,26 @@ const registerAdmin = async (req, res) => {
       password,
     });
 
-const token = generateToken(admin._id, "admin");
-
-res.status(201).json({
-  message: "Admin registered successfully",
-  token,
-  admin: {
-    id: admin._id,
-    username: admin.username,
-    email: admin.email,
-  },
-});
-
+    res.status(201).json({
+      message: "Admin registered successfully",
+      token: generateToken(admin._id, "admin"),
+      admin: {
+        id: admin._id,
+        username: admin.username,
+        email: admin.email,
+      },
+    });
   } catch (error) {
     console.error("Register error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-
-// Login Admin
+// LOGIN
 const loginAdmin = async (req, res) => {
-  const { email, password } = req.body;
-
   try {
+    const { email, password } = req.body;
+
     const admin = await Admin.findOne({ email });
     if (!admin) {
       return res.status(400).json({ message: "Invalid email or password" });
@@ -63,11 +62,9 @@ const loginAdmin = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    const token = generateToken(admin._id, "admin");
-
     res.status(200).json({
       message: "Login successful",
-      token,
+      token: generateToken(admin._id, "admin"),
       admin: {
         id: admin._id,
         username: admin.username,
