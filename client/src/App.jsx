@@ -1,10 +1,9 @@
-// // // src/App.jsx
+// src/App.jsx
 
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Admin from "./components/Admin/Admin";
 import Login from "./components/Login/Login";
-import Register from "./components/Login/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -16,7 +15,6 @@ function App() {
 
         {/* Auth */}
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
 
         {/* Admin (Protected) */}
         <Route

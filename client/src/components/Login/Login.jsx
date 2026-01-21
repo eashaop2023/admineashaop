@@ -124,20 +124,14 @@ const Login = () => {
           >
             {loading ? "Logging in..." : "Login"}
           </button>
-                    <p className="text-center mt-3 mb-0">
-             Don’t have an account?{" "}
-  <span
-    style={{ color: "#0d6efd", cursor: "pointer" }}
-    onClick={() => navigate("/register")}
-  >
-    Register
-  </span>
-</p>
+
         </form>
       </div>
     </div>
   );
 };
+
+
 
 export default Login;
 
