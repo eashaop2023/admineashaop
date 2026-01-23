@@ -47,9 +47,7 @@ const NavBar = () => {
     <>
       <style>
         {`
-          body {
-            padding-top: 70px;
-          }
+
           .nav-left {
             margin-left: 48px;
           }

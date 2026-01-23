@@ -31,7 +31,7 @@ const Login = () => {
   }
 );
 
-      // ✅ Save token and admin info in localStorage
+      // Save token and admin info in localStorage
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("admin", JSON.stringify(response.data.admin));
 
