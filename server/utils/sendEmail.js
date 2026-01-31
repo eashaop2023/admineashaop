@@ -1,7 +1,7 @@
 const { MailerSend, EmailParams, Sender, Recipient } = require("mailersend");
 require("dotenv").config();
 
-// ✅ Send Email Using MailSender
+//  Send Email Using MailSender
 const sendEmailByMailSender = async ({ email, subject, message }) => {
   try {
     const mailerSend = new MailerSend({
@@ -9,6 +9,8 @@ const sendEmailByMailSender = async ({ email, subject, message }) => {
     });
 
     const sentFrom = new Sender("contact@eashaop.com", "Doctor Portal"); 
+    
+
     const recipients = [new Recipient(email)];
 
     const emailParams = new EmailParams()
@@ -26,3 +28,5 @@ const sendEmailByMailSender = async ({ email, subject, message }) => {
 };
 
 module.exports = { sendEmailByMailSender };
+
+

@@ -134,7 +134,7 @@ const deleteUser = async (req, res) => {
   }
 };
 
-// ======================== DOCTOR MANAGEMENT ========================
+//======================== DOCTOR MANAGEMENT ========================
 
 const getAllDoctors = async (req, res) => {
   try {
@@ -150,6 +150,14 @@ const getAllDoctors = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+
+
+
+
+
+
 
 const getDoctorById = async (req, res) => {
   try {
@@ -178,84 +186,77 @@ const deleteDoctor = async (req, res) => {
 
 
 
-// Verify the Doctor
+
+// verify doctor
 const verifyDoctor = async (req, res) => {
-  const doctorId = req.params.id;
-
   try {
-    const doctor = await Doctor.findById(doctorId);
-    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
+    const doctor = await Doctor.findById(req.params.id);
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
 
-    if (doctor.isVerified && doctor.isApproved)
-      return res
-        .status(200)
-        .json({ message: "Doctor is already verified and approved." });
+    if (doctor.isApproved) {
+      return res.status(400).json({
+        success: false,
+        message: "Doctor already verified",
+      });
+    }
 
     const username = doctor.email || doctor.mobile;
     const randomPassword = Math.random().toString(36).slice(-8);
     const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
-    // Update doctor document
-    doctor.isVerified = true;
     doctor.isApproved = true;
     doctor.username = username;
     doctor.password = hashedPassword;
+    await doctor.save();
 
-    // Create or update VerifiedDoctor entry
-    const verifiedDoctorPromise = VerifiedDoctor.findOne({ doctorId: doctor._id })
-      .then((existing) => {
-        if (!existing) {
-          return new VerifiedDoctor({
-            doctorId: doctor._id,
-            name: doctor.name,
-            email: doctor.email,
-            mobile: doctor.mobile,
-            username,
-            password: hashedPassword,
-          }).save();
-        }
-      });
-
-    await Promise.all([doctor.save(), verifiedDoctorPromise]);
-
-
-    if (doctor.email) {
-      const subject = "Your Doctor Portal Login Credentials";
-
-      // ✨ HTML Email Template
-      const message = `
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #eee;border-radius:8px;">
-          <h2 style="color:#2c3e50;">Welcome to the Doctor Portal, Dear. ${doctor.name}</h2>
-          <p>Your account has been <strong>verified and approved</strong>.</p>
-          <p>You can now log in using the following credentials:</p>
-          <div style="background:#f9f9f9;padding:15px;border-radius:6px;margin-top:10px;margin-bottom:20px;">
-            <p><strong>Username:</strong> ${username}</p>
-            <p><strong>Password:</strong> ${randomPassword}</p>
-          </div>
-          <p>Please log in and <strong>change your password</strong> after first login.</p>
-          <p>Thank you,<br/><strong>eAshaop 24/7 Team</strong></p>
-        </div>
-      `;
-
-      await sendEmailByMailSender({
+    // ✅ SAVE VERIFIED DOCTOR (SAFE)
+    try {
+      await VerifiedDoctor.create({
+        doctorId: doctor._id,
+        name: doctor.name,
         email: doctor.email,
-        subject,
-        message,
+        mobile: doctor.mobile,
+        username,
+        password: hashedPassword,
+      });
+    } catch (e) {
+      console.error("VerifiedDoctor save failed:", e.message);
+    }
+
+    // ✅ EMAIL (NON-BLOCKING)
+    if (doctor.email) {
+      sendEmailByMailSender({
+        email: doctor.email,
+        subject: "Doctor Account Verified",
+        message: `
+          <h2>Hello Dr. ${doctor.name}</h2>
+          <p>Username: ${username}</p>
+          <p>Password: ${randomPassword}</p>
+        `,
+      }).catch(err => {
+        console.error("EMAIL ERROR:", err.message);
       });
     }
 
-    res.json({
+    return res.status(200).json({
       success: true,
-      message: "Doctor verified and approved successfully.",
+      message: "Doctor verified successfully",
     });
+
   } catch (error) {
-    console.error(" Error verifying doctor:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("VERIFY DOCTOR CRASH:", error);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
 
-// Get all verified doctors from VerifiedDoctor collection
+
+
+
+
+// // Get all verified doctors from VerifiedDoctor collection
 const getAllVerifiedDoctors = async (req, res) => {
   try {
     const verifiedDoctors = await VerifiedDoctor.find({});
@@ -273,6 +274,8 @@ const getAllVerifiedDoctors = async (req, res) => {
     });
   }
 };
+
+
 
 // ======================== REVIEWS ========================
 const giveDoctorReview = async (req, res) => {
@@ -317,6 +320,7 @@ const giveDoctorReview = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 
 // ===================== ADMIN APPOINTMENT MANAGEMENT =====================
@@ -394,6 +398,7 @@ const getAppointmentsByDoctor = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 // Get Appointment Details by ID
 const getAppointmentDetails = async (req, res) => {

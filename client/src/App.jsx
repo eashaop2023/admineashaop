@@ -1,5 +1,5 @@
-// src/App.jsx
 
+// src/App.jsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Admin from "./components/Admin/Admin";
@@ -29,5 +29,5 @@ function App() {
     </Router>
   );
 }
-
 export default App;
+

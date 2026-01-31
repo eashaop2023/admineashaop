@@ -9,6 +9,7 @@ router.post("/register", adminController.registerAdmin);
 router.post("/login", adminController.loginAdmin);
 router.post("/logout", adminController.logoutAdmin);
 
+
 // User routes
 router.get("/users", verifyAdmin(Admin), adminController.getAllUsers);
 router.get("/users/:id", verifyAdmin(Admin), adminController.getUserById);
@@ -18,6 +19,8 @@ router.delete("/users/:id", verifyAdmin(Admin), adminController.deleteUser);
 router.get("/doctors", verifyAdmin(Admin), adminController.getAllDoctors);
 router.get("/doctors/:id", verifyAdmin(Admin), adminController.getDoctorById);
 router.delete("/doctors/:id", verifyAdmin(Admin), adminController.deleteDoctor);
+
+
 
 // Verify & fetch verified doctors
 router.post("/doctors/:id/verify", verifyAdmin(Admin), adminController.verifyDoctor);

@@ -20,8 +20,10 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./ManageDoctors.css";
+import { useNavigate } from "react-router-dom"; // Add this
 
 function ManageDoctors() {
+  const navigate = useNavigate();
   const [doctors, setDoctors] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -188,83 +190,91 @@ function ManageDoctors() {
       </div>
 
       {/* Stats Cards */}
-      <Row className="stats-row">
-        <Col xl={3} lg={6} className="mb-3">
-          <Card className="stat-card total-doctors">
-            <Card.Body>
-              <div className="stat-content">
-                <div className="stat-icon primary">
-                  <BsPersonBadge />
-                </div>
-                <div className="stat-info">
-                  <div className="stat-value">{doctors.length}</div>
-                  <div className="stat-title">Total Doctors</div>
-                  <div className="growth-indicator positive">
-                    <span>All registered</span>
-                  </div>
-                </div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col xl={3} lg={6} className="mb-3">
-          <Card className="stat-card pending-verification">
-            <Card.Body>
-              <div className="stat-content">
-                <div className="stat-icon warning">
-                  <BsClockHistory />
-                </div>
-                <div className="stat-info">
-                  <div className="stat-value">{doctorsToVerify.length}</div>
-                  <div className="stat-title">Pending Verification</div>
-                  <div className="growth-indicator neutral">
-                    <span>Need approval</span>
-                  </div>
-                </div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col xl={3} lg={6} className="mb-3">
-          <Card className="stat-card active-doctors">
-            <Card.Body>
-              <div className="stat-content">
-                <div className="stat-icon success">
-                  <BsCheckLg />
-                </div>
-                <div className="stat-info">
-                  <div className="stat-value">{activeDoctors.length}</div>
-                  <div className="stat-title">Verified Doctors</div>
-                  <div className="growth-indicator positive">
-                    <span>Active</span>
-                  </div>
-                </div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col xl={3} lg={6} className="mb-3">
-          <Card className="stat-card search-stats">
-            <Card.Body>
-              <div className="stat-content">
-                <div className="stat-icon danger">
-                  <BsSearch />
-                </div>
-                <div className="stat-info">
-                  <div className="stat-value">{filteredDoctors.length}</div>
-                  <div className="stat-title">Showing</div>
-                  <div className="growth-indicator neutral">
-                    <span>Current view</span>
-                  </div>
-                </div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+<Row className="stats-row">
+  {/* 1. Total Doctors Card */}
+  <Col xl={3} lg={6} className="mb-3">
+    <Card 
+      className="stat-card total-doctors" 
+      onClick={() => navigate("/admin/doctors/all")} 
+      style={{ cursor: "pointer" }}
+    >
+      <Card.Body>
+        <div className="stat-content">
+          <div className="stat-icon primary"><BsPersonBadge /></div>
+          <div className="stat-info">
+            <div className="stat-value">{doctors.length}</div>
+            <div className="stat-title">Total Doctors</div>
+            <div className="growth-indicator positive"><span>All registered</span></div>
+          </div>
+        </div>
+      </Card.Body>
+    </Card>
+  </Col>
+
+  {/* 2. Pending Verification Card */}
+  <Col xl={3} lg={6} className="mb-3">
+    <Card 
+      className="stat-card pending-verification" 
+      onClick={() => navigate("/admin/doctors/pending")} 
+      style={{ cursor: "pointer" }}
+    >
+      <Card.Body>
+        <div className="stat-content">
+          <div className="stat-icon warning"><BsClockHistory /></div>
+          <div className="stat-info">
+            <div className="stat-value">{doctorsToVerify.length}</div>
+            <div className="stat-title">Pending Verification</div>
+            <div className="growth-indicator neutral"><span>Need approval</span></div>
+          </div>
+        </div>
+      </Card.Body>
+    </Card>
+  </Col>
+
+  {/* 3. Verified Doctors Card */}
+  <Col xl={3} lg={6} className="mb-3">
+    <Card 
+      className="stat-card active-doctors" 
+      onClick={() => navigate("/admin/doctors/verified")} 
+      style={{ cursor: "pointer" }}
+    >
+      <Card.Body>
+        <div className="stat-content">
+          <div className="stat-icon success"><BsCheckLg /></div>
+          <div className="stat-info">
+            <div className="stat-value">{activeDoctors.length}</div>
+            <div className="stat-title">Verified Doctors</div>
+            <div className="growth-indicator positive"><span>Active</span></div>
+          </div>
+        </div>
+      </Card.Body>
+    </Card>
+  </Col>
+
+  {/* 4. Showing / Current View Card */}
+  <Col xl={3} lg={6} className="mb-3">
+    <Card 
+      className="stat-card search-stats" 
+      onClick={() => navigate("/admin/doctors/current-view")} 
+      style={{ cursor: "pointer" }}
+    >
+      <Card.Body>
+        <div className="stat-content">
+          <div className="stat-icon danger"><BsSearch /></div>
+          <div className="stat-info">
+            <div className="stat-value">{filteredDoctors.length}</div>
+            <div className="stat-title">Showing</div>
+            <div className="growth-indicator neutral"><span>Current view</span></div>
+          </div>
+        </div>
+      </Card.Body>
+    </Card>
+  </Col>
+</Row>
+
 
       {/* Content Card with Tabs */}
-      <Card className="content-card">
+     <Card className="content-card">
         <Card.Header className="content-card-header">
           <div className="d-flex align-items-center">
             <h5 className="mb-0 me-3">
@@ -318,11 +328,14 @@ function ManageDoctors() {
             </InputGroup>
           </div>
         </Card.Header>
-        <Card.Body className="p-0">
+         <Card.Body className="p-0"> 
+
+
           {/* Tab Content */}
-          <div className="tab-content">
+          
+       <div className="tab-content">
             {/* Pending Verification Tab */}
-            {activeTab === "pending" && (
+           {activeTab === "pending" && (
               <div className="tab-pane active">
                 <div className="table-responsive">
                   <Table hover className="doctor-table">
@@ -399,6 +412,7 @@ function ManageDoctors() {
                                   View Profile
                                 </Button>
                                 <Button
+                                 type="button"   
                                   variant="outline-danger"
                                   size="sm"
                                   onClick={() => handleDelete(doc._id)}
@@ -436,6 +450,7 @@ function ManageDoctors() {
             )}
 
             {/* Verified Doctors Tab */}
+          
             {activeTab === "verified" && (
               <div className="tab-pane active">
                 <div className="table-responsive">
@@ -720,6 +735,7 @@ function ManageDoctors() {
           )}
         </Modal.Footer>
       </Modal>
+      
     </Container>
   );
 }
