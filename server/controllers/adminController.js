@@ -160,81 +160,258 @@ const deleteDoctor = async (req, res) => {
 
 
 
-// Verify the Doctor
+
+
+
+
 const verifyDoctor = async (req, res) => {
-  const doctorId = req.params.id;
-
   try {
-    const doctor = await Doctor.findById(doctorId);
-    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
+    const doctor = await Doctor.findById(req.params.id);
+    if (!doctor) {
+      return res.status(404).json({ success: false, message: "Doctor not found" });
+    }
 
-    if (doctor.isVerified && doctor.isApproved)
-      return res
-        .status(200)
-        .json({ message: "Doctor is already verified and approved." });
-
-    const username = doctor.email || doctor.mobile;
-    const randomPassword = Math.random().toString(36).slice(-8);
-    const hashedPassword = await bcrypt.hash(randomPassword, 10);
-
-    // Update doctor document
-    doctor.isVerified = true;
-    doctor.isApproved = true;
-    doctor.username = username;
-    doctor.password = hashedPassword;
-
-    // Create or update VerifiedDoctor entry
-    const verifiedDoctorPromise = VerifiedDoctor.findOne({ doctorId: doctor._id })
-      .then((existing) => {
-        if (!existing) {
-          return new VerifiedDoctor({
-            doctorId: doctor._id,
-            name: doctor.name,
-            email: doctor.email,
-            mobile: doctor.mobile,
-            username,
-            password: hashedPassword,
-          }).save();
-        }
-      });
-
-    await Promise.all([doctor.save(), verifiedDoctorPromise]);
-
-
-    if (doctor.email) {
-      const subject = "Your Doctor Portal Login Credentials";
-
-      // ✨ HTML Email Template
-      const message = `
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #eee;border-radius:8px;">
-          <h2 style="color:#2c3e50;">Welcome to the Doctor Portal, Dear. ${doctor.name}</h2>
-          <p>Your account has been <strong>verified and approved</strong>.</p>
-          <p>You can now log in using the following credentials:</p>
-          <div style="background:#f9f9f9;padding:15px;border-radius:6px;margin-top:10px;margin-bottom:20px;">
-            <p><strong>Username:</strong> ${username}</p>
-            <p><strong>Password:</strong> ${randomPassword}</p>
-          </div>
-          <p>Please log in and <strong>change your password</strong> after first login.</p>
-          <p>Thank you,<br/><strong>eAshaop 24/7 Team</strong></p>
-        </div>
-      `;
-
-      await sendEmailByMailSender({
-        email: doctor.email,
-        subject,
-        message,
+    if (doctor.isApproved) {
+      return res.status(200).json({
+        success: true,
+        message: "Doctor already verified",
       });
     }
 
-    res.json({
-      success: true,
-      message: "Doctor verified and approved successfully.",
+    const username = doctor.email || doctor.mobile;
+    const plainPassword = Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+    doctor.isApproved = true;
+    doctor.isVerified = true;
+    doctor.username = username;
+    doctor.password = hashedPassword;
+    await doctor.save();
+
+    await VerifiedDoctor.create({
+      doctorId: doctor._id,
+      name: doctor.name,
+      email: doctor.email,
+      mobile: doctor.mobile,
+      username,
+      password: hashedPassword,
     });
+
+    // ✅ SEND SUCCESS RESPONSE IMMEDIATELY
+    res.status(200).json({
+      success: true,
+      message: "Doctor verified successfully",
+    });
+
+    // 📧 EMAIL (NON-BLOCKING)
+    if (doctor.email) {
+      sendEmailByMailSender({
+        email: doctor.email,
+        subject: "Doctor Account Verified",
+        message: `
+          <h3>Hello Dr. ${doctor.name}</h3>
+          <p>Your account has been verified.</p>
+          <p><b>Username:</b> ${username}</p>
+          <p><b>Password:</b> ${plainPassword}</p>
+          <p>Please change your password after login.</p>
+        `,
+      }).catch(err => {
+        console.error("Email failed:", err.message);
+      });
+    }
+
   } catch (error) {
-    console.error(" Error verifying doctor:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Verify doctor error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// const verifyDoctor = async (req, res) => {
+//   const doctorId = req.params.id;
+
+//   try {
+//     const doctor = await Doctor.findById(doctorId);
+//     if (!doctor) {
+//       return res.status(404).json({ message: "Doctor not found" });
+//     }
+
+//     if (doctor.isApproved) {
+//       return res.json({ message: "Doctor already verified" });
+//     }
+
+//     //  Create credentials
+//     const username = doctor.email || doctor.mobile;
+//     const randomPassword = Math.random().toString(36).slice(-8);
+//     const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+//     //  Update doctor
+//     doctor.isApproved = true;
+//     doctor.isVerified = true;
+//     doctor.username = username;
+//     doctor.password = hashedPassword;
+
+//     await doctor.save();
+
+//     //  Save VerifiedDoctor (DO NOT block main flow)
+//     const exists = await VerifiedDoctor.findOne({ doctorId: doctor._id });
+//     if (!exists) {
+//       await VerifiedDoctor.create({
+//         doctorId: doctor._id,
+//         name: doctor.name,
+//         email: doctor.email,
+//         mobile: doctor.mobile,
+//         username,
+//         password: hashedPassword,
+//       });
+//     }
+
+//     //  Send email safely (NON-BLOCKING)
+//     if (doctor.email) {
+//       sendEmailByMailSender({
+//         email: doctor.email,
+//         subject: "Doctor Account Verified – Login Credentials",
+//         message: `
+//           <h2>Hello Dr. ${doctor.name}</h2>
+//           <p>Your account has been <b>verified</b>.</p>
+//           <p><b>Username:</b> ${username}</p>
+//           <p><b>Password:</b> ${randomPassword}</p>
+//           <p>Please change your password after login.</p>
+//         `,
+//       }).catch((err) => {
+//         console.error("⚠️ Email failed but verification succeeded:", err);
+//       });
+//     }
+
+//     //  ALWAYS SUCCESS RESPONSE
+//     return res.json({
+//       success: true,
+//       message: "Doctor verified successfully",
+//     });
+
+//   } catch (error) {
+//     console.error("Verify doctor error:", error);
+//     return res.status(500).json({ message: "Verification failed" });
+//   }
+// };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// // Verify the Doctor
+// const verifyDoctor = async (req, res) => {
+//   const doctorId = req.params.id;
+
+//   try {
+//     const doctor = await Doctor.findById(doctorId);
+//     if (!doctor) return res.status(404).json({ message: "Doctor not found" });
+
+//     if (doctor.isVerified && doctor.isApproved)
+//       return res
+//         .status(200)
+//         .json({ message: "Doctor is already verified and approved." });
+
+//     const username = doctor.email || doctor.mobile;
+//     const randomPassword = Math.random().toString(36).slice(-8);
+//     const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+//     // Update doctor document
+//     doctor.isVerified = true;
+//     doctor.isApproved = true;
+//     doctor.username = username;
+//     doctor.password = hashedPassword;
+
+//     // Create or update VerifiedDoctor entry
+//     const verifiedDoctorPromise = VerifiedDoctor.findOne({ doctorId: doctor._id })
+//       .then((existing) => {
+//         if (!existing) {
+//           return new VerifiedDoctor({
+//             doctorId: doctor._id,
+//             name: doctor.name,
+//             email: doctor.email,
+//             mobile: doctor.mobile,
+//             username,
+//             password: hashedPassword,
+//           }).save();
+//         }
+//       });
+
+//     await Promise.all([doctor.save(), verifiedDoctorPromise]);
+
+
+//     if (doctor.email) {
+//       const subject = "Your Doctor Portal Login Credentials";
+
+//       // ✨ HTML Email Template
+//       const message = `
+//         <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #eee;border-radius:8px;">
+//           <h2 style="color:#2c3e50;">Welcome to the Doctor Portal, Dear. ${doctor.name}</h2>
+//           <p>Your account has been <strong>verified and approved</strong>.</p>
+//           <p>You can now log in using the following credentials:</p>
+//           <div style="background:#f9f9f9;padding:15px;border-radius:6px;margin-top:10px;margin-bottom:20px;">
+//             <p><strong>Username:</strong> ${username}</p>
+//             <p><strong>Password:</strong> ${randomPassword}</p>
+//           </div>
+//           <p>Please log in and <strong>change your password</strong> after first login.</p>
+//           <p>Thank you,<br/><strong>eAshaop 24/7 Team</strong></p>
+//         </div>
+//       `;
+
+//       await sendEmailByMailSender({
+//         email: doctor.email,
+//         subject,
+//         message,
+//       });
+//     }
+
+//     res.json({
+//       success: true,
+//       message: "Doctor verified and approved successfully.",
+//     });
+//   } catch (error) {
+//     console.error(" Error verifying doctor:", error);
+//     res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// };
 
 
 // Get all verified doctors from VerifiedDoctor collection
