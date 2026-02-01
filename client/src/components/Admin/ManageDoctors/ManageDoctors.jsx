@@ -6,14 +6,7 @@ import {
   Row,
   Col,
   Button,
-  Form,
-  Table,
   Card,
-  Modal,
-  ListGroup,
-  Badge,
-  InputGroup,
-  Nav,
 } from "react-bootstrap";
 import { BsTrash, BsEye, BsCheckLg, BsSearch, BsPersonBadge, BsClockHistory, BsFilter, BsListCheck } from "react-icons/bs";
 import { toast, ToastContainer } from "react-toastify";
@@ -31,8 +24,9 @@ function ManageDoctors() {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState("pending"); // "pending" or "verified"
-
   const token = localStorage.getItem("token");
+
+  
 
   // Fetch all doctors
   const fetchDoctors = async () => {
@@ -174,6 +168,7 @@ function ManageDoctors() {
     </div>
   );
 
+
   return (
     <Container fluid className="manage-doctors-container">
       <ToastContainer autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover />
@@ -197,6 +192,7 @@ function ManageDoctors() {
       className="stat-card total-doctors" 
       onClick={() => navigate("/admin/doctors/all")} 
       style={{ cursor: "pointer" }}
+      
     >
       <Card.Body>
         <div className="stat-content">

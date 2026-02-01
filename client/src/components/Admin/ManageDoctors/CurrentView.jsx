@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Container, Table, Button, Badge, Card, Form } from "react-bootstrap";
