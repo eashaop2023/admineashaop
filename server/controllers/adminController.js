@@ -8,6 +8,7 @@ const bcrypt = require("bcryptjs");
 const { ObjectId } = require("mongodb");
 const { sendEmailByMailSender } = require("../utils/sendEmail");
 const Appointment = require("../models/Appointment");
+const crypto = require("crypto");
 
 // Register Admin
 const registerAdmin = async (req, res) => {
@@ -179,23 +180,19 @@ const verifyDoctor = async (req, res) => {
     }
 
     const username = doctor.email || doctor.mobile;
-    const plainPassword = Math.random().toString(36).slice(-8);
-    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+    
+    // Generate secure setup token
+    const setupToken = crypto.randomBytes(32).toString("hex");
+    const setupTokenExpires = new Date();
+    setupTokenExpires.setDate(setupTokenExpires.getDate() + 7); // Token expires in 7 days
 
     doctor.isApproved = true;
     doctor.isVerified = true;
     doctor.username = username;
-    doctor.password = hashedPassword;
+    doctor.setupToken = setupToken;
+    doctor.setupTokenExpires = setupTokenExpires;
+    // Don't set password yet - doctor will set it via the link
     await doctor.save();
-
-    await VerifiedDoctor.create({
-      doctorId: doctor._id,
-      name: doctor.name,
-      email: doctor.email,
-      mobile: doctor.mobile,
-      username,
-      password: hashedPassword,
-    });
 
     // ✅ SEND SUCCESS RESPONSE IMMEDIATELY
     res.status(200).json({
@@ -205,15 +202,31 @@ const verifyDoctor = async (req, res) => {
 
     // 📧 EMAIL (NON-BLOCKING)
     if (doctor.email) {
+      // Get frontend URL from environment or use default
+      const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || "http://localhost:5173";
+      const setupLink = `${frontendUrl}/doctor/setup-password?token=${setupToken}`;
+
       sendEmailByMailSender({
         email: doctor.email,
-        subject: "Doctor Account Verified",
+        subject: "Doctor Account Verified - Set Your Password",
         message: `
-          <h3>Hello Dr. ${doctor.name}</h3>
-          <p>Your account has been verified.</p>
-          <p><b>Username:</b> ${username}</p>
-          <p><b>Password:</b> ${plainPassword}</p>
-          <p>Please change your password after login.</p>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+            <h2 style="color: #2c3e50;">Hello Dr. ${doctor.name}</h2>
+            <p>Your account has been <strong>verified and approved</strong> by the admin.</p>
+            <p>To complete your registration, please set your password by clicking the link below:</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${setupLink}" 
+                 style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                Set Your Password
+              </a>
+            </div>
+            <p style="color: #666; font-size: 14px;">Or copy and paste this link into your browser:</p>
+            <p style="color: #666; font-size: 12px; word-break: break-all;">${setupLink}</p>
+            <p style="color: #999; font-size: 12px; margin-top: 20px;">
+              <strong>Note:</strong> This link will expire in 7 days. If you didn't request this, please ignore this email.
+            </p>
+            <p style="margin-top: 30px;">Thank you,<br/><strong>eAshaop 24/7 Team</strong></p>
+          </div>
         `,
       }).catch(err => {
         console.error("Email failed:", err.message);
@@ -577,6 +590,122 @@ const getAppointmentDetails = async (req, res) => {
   }
 };
 
+// Verify Doctor Setup Token (Public endpoint - no auth required)
+const verifyDoctorSetupToken = async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Token is required" 
+      });
+    }
+
+    // Find doctor by setup token
+    const doctor = await Doctor.findOne({ 
+      setupToken: token,
+      setupTokenExpires: { $gt: new Date() } // Token not expired
+    });
+
+    if (!doctor) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid or expired token" 
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Token is valid",
+      doctor: {
+        name: doctor.name,
+        email: doctor.email,
+      },
+    });
+
+  } catch (error) {
+    console.error("Verify doctor setup token error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error", 
+      error: error.message 
+    });
+  }
+};
+
+// Set Doctor Password (Public endpoint - no auth required)
+const setDoctorPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Token and password are required" 
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Password must be at least 6 characters long" 
+      });
+    }
+
+    // Find doctor by setup token
+    const doctor = await Doctor.findOne({ 
+      setupToken: token,
+      setupTokenExpires: { $gt: new Date() } // Token not expired
+    });
+
+    if (!doctor) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid or expired token. Please contact admin for a new setup link." 
+      });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update doctor with password and clear setup token
+    doctor.password = hashedPassword;
+    doctor.setupToken = undefined;
+    doctor.setupTokenExpires = undefined;
+    await doctor.save();
+
+    // Update or create VerifiedDoctor entry
+    const verifiedDoctor = await VerifiedDoctor.findOne({ doctorId: doctor._id });
+    if (verifiedDoctor) {
+      verifiedDoctor.password = hashedPassword;
+      await verifiedDoctor.save();
+    } else {
+      await VerifiedDoctor.create({
+        doctorId: doctor._id,
+        name: doctor.name,
+        email: doctor.email,
+        mobile: doctor.mobile,
+        username: doctor.username,
+        password: hashedPassword,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Password set successfully. You can now login with your credentials.",
+    });
+
+  } catch (error) {
+    console.error("Set doctor password error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error", 
+      error: error.message 
+    });
+  }
+};
+
 module.exports = {
   registerAdmin,
   loginAdmin,
@@ -594,4 +723,6 @@ module.exports = {
   getAppointmentsByUser,
   getAppointmentsByDoctor,
   getAppointmentDetails,
+  verifyDoctorSetupToken,
+  setDoctorPassword,
 };

@@ -11,7 +11,10 @@ const doctorSchema = new mongoose.Schema({
     default: false,
   },
   username: { type: String }, 
-  password: { type: String }, 
+  password: { type: String },
+  isVerified: { type: Boolean, default: false },
+  setupToken: { type: String },
+  setupTokenExpires: { type: Date },
   reviews: [
     {
       adminId: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },

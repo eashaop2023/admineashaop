@@ -9,6 +9,10 @@ router.post("/register", adminController.registerAdmin);
 router.post("/login", adminController.loginAdmin);
 router.post("/logout", adminController.logoutAdmin);
 
+// Public doctor password setup routes (no auth required)
+router.get("/doctor/verify-setup-token", adminController.verifyDoctorSetupToken);
+router.post("/doctor/setup-password", adminController.setDoctorPassword);
+
 // User routes
 router.get("/users", verifyAdmin(Admin), adminController.getAllUsers);
 router.get("/users/:id", verifyAdmin(Admin), adminController.getUserById);
